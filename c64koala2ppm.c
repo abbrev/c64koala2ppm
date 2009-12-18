@@ -1,3 +1,26 @@
+/*
+
+$Id$
+
+c64koala2ppm, convert a Commodore 64 KoalaPaint image to Portable Pixmap
+Copyright 2009 Christopher Williams
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,10 +163,28 @@ char *argv0;
 void usage(void)
 {
 	fprintf(stderr,
-	        "Usage: %s [-h] [-s saturation] [koala_file]\n"
+	        "Usage: %s [-hL] [-s saturation] [koala_file]\n"
 		"  -h             Show this help message and exit\n"
+	        "  -L             Show license information and exit\n"
 	        "  -s saturation  Set the output saturation. Value must be >= 0\n",
 	        argv0);
+}
+
+void license(void)
+{
+	fprintf(stderr,
+	        "c64koala2ppm, convert a Commodore 64 KoalaPaint image to Portable Pixmap\n"
+	        "Copyright 2009 Christopher Williams\n"
+	        "\n"
+	        "This program is free software; you can redistribute it and/or\n"
+	        "modify it under the terms of the GNU General Public License\n"
+	        "as published by the Free Software Foundation; either version 2\n"
+	        "of the License, or (at your option) any later version.\n"
+	        "\n"
+	        "This program is distributed in the hope that it will be useful,\n"
+	        "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+	        "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+	        "GNU General Public License for more details.\n");
 }
 
 char *koalafilename = NULL;
@@ -152,10 +193,13 @@ int getargs(int argc, char *argv[])
 {
 	int opt;
 	saturation = SATURATION;
-	while ((opt = getopt(argc, argv, "hs:")) != -1) {
+	while ((opt = getopt(argc, argv, "hLs:")) != -1) {
 		switch (opt) {
 		case 'h':
 			usage();
+			exit(0);
+		case 'L':
+			license();
 			exit(0);
 		case 's':
 			saturation = atof(optarg);
@@ -215,12 +259,11 @@ int main(int argc, char *argv[])
 	memset(color, 0x06, sizeof(color));
 	bg = 0x00;
 	
-	fread(loadaddr, 1, 2, koalafile);
-	fread(bitmap, 1, 8000, koalafile);
-	fread(video, 1, 1000, koalafile);
-	fread(color, 1, 1000, koalafile);
-	fread(&bg, 1, 1, koalafile);
-	if (feof(koalafile)) {
+	if (!(fread(loadaddr, 2, 1, koalafile) &&
+	      fread(bitmap, 8000, 1, koalafile) &&
+	      fread(video, 1000, 1, koalafile) &&
+	      fread(color, 1000, 1, koalafile) &&
+	      fread(&bg, 1, 1, koalafile))) {
 		fprintf(stderr, "%s: koala file is too short. Output may be corrupt.\n", argv0);
 	}
 	
